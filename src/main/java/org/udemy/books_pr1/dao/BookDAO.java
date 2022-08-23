@@ -33,7 +33,7 @@ public class BookDAO {
     }
 
     public void saveBook(Book book){
-        jdbcTemplate.update("INSERT INTO Book(title, author, year, user_id) VALUES (?,?,?)",
+        jdbcTemplate.update("INSERT INTO Book(title, author, year) VALUES (?,?,?)",
                 book.getTitle(), book.getAuthor(), book.getYear());
     }
 
@@ -46,8 +46,19 @@ public class BookDAO {
         jdbcTemplate.update("DELETE FROM Book WHERE book_id=?", id);
     }
 
-    public Optional<Person> getBookOwner(int id){
-        return jdbcTemplate.query("SELECT Person.* FROM Book JOIN Person ON Book.user_id=Person.user_id" +
-                "WHERE Book.book_id=?", new Object[]{id}, new BeanPropertyRowMapper<>(Person.class)).stream().findAny();
+    public Optional<Person> getBookOwner(int id) {
+        return jdbcTemplate.query("SELECT Person.* FROM Book JOIN Person ON Book.user_id = Person.user_id " +
+                        "WHERE Book.user_id = ?", new Object[]{id}, new BeanPropertyRowMapper<>(Person.class))
+                .stream().findAny();
+    }
+
+    // Освбождает книгу (этот метод вызывается, когда человек возвращает книгу в библиотеку)
+    public void release(int id) {
+        jdbcTemplate.update("UPDATE Book SET user_id=NULL WHERE book_id=?", id);
+    }
+
+    // Назначает книгу человеку (этот метод вызывается, когда человек забирает книгу из библиотеки)
+    public void assign(int id, Person selectedPerson) {
+        jdbcTemplate.update("UPDATE Book SET user_id=? WHERE book_id=?", selectedPerson.getUserId(), id);
     }
 }
